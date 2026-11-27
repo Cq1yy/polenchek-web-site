@@ -4,12 +4,14 @@ import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import { AnimatePresence, m, useIsPresent, useReducedMotion, type PanInfo } from "motion/react";
+import posthog from "posthog-js";
 
 import type { Artwork, GallerySection } from "@/content/site";
 import { DesktopMosaic, useDesktopGallery } from "@/components/desktop-gallery";
 import { LiquidButton } from "@/components/liquid-button";
 import { Segmented } from "@/components/segmented";
 import { galleryDesktopPreviewWidth, galleryPreviewSizes, isPortrait } from "@/lib/gallery-images";
+import { portfolioLog } from "@/lib/posthog-logs";
 import { usePointerPosition } from "@/lib/use-pointer-position";
 
 const ease = [0.22, 1, 0.36, 1] as const;
@@ -21,6 +23,11 @@ export function Gallery({ sections }: { sections: GallerySection[] }) {
   // (Safari does not focus buttons on click, so document.activeElement is not enough.)
   const openerRef = useRef<HTMLElement | null>(null);
   const open = (id: string, el?: HTMLElement | null) => {
+    const category = sections.find((section) => section.items.some((art) => art.id === id))?.id;
+    if (process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN && process.env.NEXT_PUBLIC_POSTHOG_HOST) {
+      posthog.capture("gallery_artwork_opened", { artwork_id: id, category });
+      portfolioLog.artworkOpened(id, category);
+    }
     openerRef.current = el ?? null;
     setOpenId(id);
   };

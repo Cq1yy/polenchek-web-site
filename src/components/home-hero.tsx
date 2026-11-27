@@ -1,16 +1,20 @@
+"use client";
+
 import Image from "next/image";
+import posthog from "posthog-js";
 
 import socialIcons from "@/assets/decor/social-icons.svg";
 import titleImg from "@/assets/decor/title-polenchek.webp";
 import { LiquidLink } from "@/components/liquid-button";
 import { ScriptTitle } from "@/components/script-title";
+import { portfolioLog } from "@/lib/posthog-logs";
 import { SECTIONS } from "@/lib/routes";
 import { site, socials } from "@/content/site";
 
 const d = (s: number) => ({ ["--d" as string]: `${s}s` }) as React.CSSProperties;
 
 /**
- * Home screen (server component — entrance animations are CSS).
+ * Home screen.
  *
  * desk (≥768px wide and ≥500px tall): follows the 1920px Figma frame. Positions are in
  * container-query units (cqw) relative to the 1190px glass panel:
@@ -96,6 +100,12 @@ export function HomeHero() {
                       aria-label={s.label}
                       title={s.label}
                       className="size-11 rounded-full transition-colors hover:text-blush focus-visible:text-blush focus-visible:ring-2 focus-visible:ring-blush sm:size-12"
+                      onClick={() => {
+                        if (process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN && process.env.NEXT_PUBLIC_POSTHOG_HOST) {
+                          posthog.capture("contact_channel_selected", { channel: s.label });
+                          portfolioLog.contactChannelSelected(s.label);
+                        }
+                      }}
                     >
                       <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" className="size-[22px] fill-current">
                         <use href={`${socialIcons.src}#${s.icon}`} />
