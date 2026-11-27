@@ -3,10 +3,12 @@
 import { useState } from "react";
 import Link from "next/link";
 import { m, type PanInfo } from "motion/react";
+import posthog from "posthog-js";
 
 import { PriceItemName } from "@/components/price-item-name";
 import { Segmented } from "@/components/segmented";
 import type { PriceSection } from "@/content/site";
+import { portfolioLog } from "@/lib/posthog-logs";
 
 /** Phones / tablets: one category at a time — tap a tab or swipe left/right. */
 export function PriceTabs({
@@ -26,6 +28,10 @@ export function PriceTabs({
   const select = (i: number, direction?: number) => {
     const next = (i + sections.length) % sections.length;
     if (next === index) return;
+    if (process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN && process.env.NEXT_PUBLIC_POSTHOG_HOST) {
+      posthog.capture("pricing_category_selected", { category: sections[next].title });
+      portfolioLog.pricingCategorySelected(sections[next].title);
+    }
     setDir(direction ?? (next > index ? 1 : -1));
     setIndex(next);
   };
